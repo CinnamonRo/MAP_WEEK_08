@@ -8,6 +8,10 @@ import androidx.appcompat.app.AppCompatActivity // [1]
 import androidx.core.view.ViewCompat // [1]
 import androidx.core.view.WindowInsetsCompat // [1]
 
+// [1b] Import untuk service/intent
+import android.content.Intent // [1b]
+import androidx.core.content.ContextCompat // [1b]
+
 // [2] Import WorkManager
 import androidx.work.Constraints // [2]
 import androidx.work.Data // [2]
@@ -15,9 +19,10 @@ import androidx.work.NetworkType // [2]
 import androidx.work.OneTimeWorkRequest // [2]
 import androidx.work.WorkManager // [2]
 
-// [3] Import worker kita
+// [3] Import worker & service
 import com.example.lab_week_08.worker.FirstWorker // [3]
 import com.example.lab_week_08.worker.SecondWorker // [3]
+import com.example.lab_week_08.service.NotificationService // [3]
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +37,15 @@ class MainActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars()) // [5]
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom) // [5]
             insets // [5]
+        }
+
+        // [A] Runtime permission untuk notifikasi (Android 13+)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
         }
 
         // [6] Constraint: butuh koneksi internet
@@ -55,22 +69,37 @@ class MainActivity : AppCompatActivity() {
 
         // [10] Rantai eksekusi: First → Second
         workManager.beginWith(firstRequest) // [10]
-            .then(secondRequest)            // [10]
-            .enqueue()                      // [10]
+            .then(secondRequest) // [10]
+            .enqueue() // [10]
 
-        // [11] Observasi status First
+        // [11] Observasi status First (cukup sekali)
         workManager.getWorkInfoByIdLiveData(firstRequest.id).observe(this) { info -> // [11]
             if (info.state.isFinished) {
                 showResult("First process is done") // [11]
             }
         }
 
-        // [12] Observasi status Second
+        // [12] Observasi status Second, lalu panggil service
         workManager.getWorkInfoByIdLiveData(secondRequest.id).observe(this) { info -> // [12]
             if (info.state.isFinished) {
                 showResult("Second process is done") // [12]
+                launchNotificationService() // [12]
             }
         }
+    }
+
+    // [B] Fungsi launch service + observe completion (modul step 8)
+    private fun launchNotificationService() {
+        // Observe service completion → Toast final dari modul
+        NotificationService.trackingCompletion.observe(this) { Id -> // [B]
+            showResult("Process for Notification Channel ID $Id is done!") // [B]
+        }
+
+        // Start service dengan EXTRA_ID "001" (modul)
+        val serviceIntent = Intent(this, NotificationService::class.java).apply { // [B]
+            putExtra(NotificationService.EXTRA_ID, "001") // [B]
+        }
+        ContextCompat.startForegroundService(this, serviceIntent) // [B]
     }
 
     // [13] Helper: bungkus input Data
