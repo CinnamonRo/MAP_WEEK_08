@@ -16,29 +16,29 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.LAB_WEEK_08">
-        <service
-            android:name=".NotificationService"
-            android:enabled="true"
-            android:exported="true"></service>
-        <service
-            android:name=".MyService"
-            android:enabled="true"
-            android:exported="true" />
+
+        <!-- service lama -->
         <service
             android:name=".service.NotificationService"
-            android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="dataSync"/>
 
+        <!-- service baru -->
+        <service
+            android:name=".service.SecondNotificationService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"/>
+
+        <!-- activity kamu -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>
